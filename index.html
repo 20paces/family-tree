@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Family Tree (Practice)</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Georgia,serif;background:#f6f1e7;color:#3b2f22}
+.banner{background:#b5462f;color:#fff;text-align:center;padding:10px;font:600 15px system-ui,sans-serif;letter-spacing:.5px}
+h1{text-align:center;margin:22px 10px 4px;font-size:clamp(24px,5vw,38px)}p.sub{text-align:center;margin:0 0 18px;color:#7a6650}
+.tree{display:flex;flex-direction:column;gap:34px;padding:10px 12px 30px;max-width:1200px;margin:auto}
+.gen{text-align:center}.gen h2{font:600 13px system-ui,sans-serif;text-transform:uppercase;letter-spacing:2px;color:#9a7f5f;margin:0 0 10px}
+.row{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
+.fam{display:flex;gap:6px;align-items:center;background:#ebe1cf;border-radius:14px;padding:6px}
+.fam .amp{color:#b5462f;font-size:20px}
+.p{border:2px solid #c9b79c;background:#fff;border-radius:10px;padding:10px 14px;min-width:120px;cursor:pointer;transition:.15s;font-size:15px}
+.p:hover,.p:focus{border-color:#b5462f;transform:translateY(-2px);box-shadow:0 4px 10px #0002;outline:none}
+.p.sel{border-color:#b5462f;background:#fdf0ea}.p small{display:block;color:#7a6650;font-family:system-ui,sans-serif}
+.p.m{border-top:5px solid #5d82a8}.p.f{border-top:5px solid #b8708f}
+#d{position:fixed;right:16px;bottom:16px;width:320px;max-width:calc(100% - 32px);background:#fff;border-radius:14px;box-shadow:0 8px 30px #0003;padding:18px;display:none;font-family:system-ui,sans-serif}
+#d h3{margin:0 0 6px;font-family:Georgia,serif;font-size:22px}#d .x{position:absolute;top:8px;right:12px;border:0;background:none;font-size:22px;cursor:pointer}
+#d a{color:#b5462f;cursor:pointer;text-decoration:underline}#d dl{margin:8px 0 0}#d dt{font-weight:600;margin-top:6px;font-size:13px;color:#7a6650}#d dd{margin:0}
+@media(max-width:600px){.fam{flex-direction:column}.fam .amp{display:none}.p{min-width:140px}#d{left:16px;right:16px;width:auto}}
+#d{max-height:calc(100vh - 32px);overflow:auto}
+.docs{list-style:none;padding:0;margin:4px 0 0;display:flex;flex-direction:column;gap:6px}
+.docs li a{display:flex;align-items:center;gap:8px;text-decoration:none;color:#3b2f22;background:#f6f1e7;border-radius:8px;padding:6px 8px}
+.docs li a:hover{background:#ebe1cf}.docs img{width:34px;height:44px;object-fit:cover;border:1px solid #c9b79c;background:#fff}
+.docs .pdf{width:34px;height:44px;display:grid;place-items:center;background:#b5462f;color:#fff;font:700 10px system-ui;border-radius:3px}
+#lb{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;flex-direction:column;z-index:10;padding:16px}
+#lb img{max-width:100%;max-height:calc(100vh - 80px);box-shadow:0 10px 40px #000;background:#fff}
+#lb p{color:#fff;font:15px system-ui;margin:10px 0 0}#lb button{position:absolute;top:10px;right:16px;color:#fff;background:none;border:0;font-size:34px;cursor:pointer}
+</style></head><body>
+<div class="banner">Practice site, example data</div>
+<h1>The Ashworth Family</h1><p class="sub">Fictional people. Tap anyone to see their details.</p>
+<div class="tree" id="t"></div>
+<div id="d" role="dialog"><button class="x" onclick="hide()" aria-label="Close">&times;</button><div id="dc"></div></div>
+<div id="lb" onclick="if(event.target===this)lbHide()"><button onclick="lbHide()" aria-label="Close">&times;</button><img id="lbi" alt=""><p id="lbc"></p></div>
+<script>
+// ===== EDIT FAMILY DATA HERE =====
+// id, name, sex (m/f), born, died (null = living), parents [ids], spouse id, note,
+// docs: [{title, file}] - files live in docs/ (images open in a lightbox, PDFs in a new tab)
+const people = [
+  {id:1, name:"Walter Ashworth", sex:"m", born:1921, died:1994, parents:[], spouse:2, note:"Carpenter from Ballarat.", docs:[{title:"Birth certificate", file:"docs/birth-walter-1921.svg"}, {title:"Marriage certificate", file:"docs/marriage-walter-edith-1946.svg"}, {title:"Will (PDF)", file:"docs/will-walter-1990.pdf"}]},
+  {id:2, name:"Edith Ashworth (née Hale)", sex:"f", born:1924, died:2009, parents:[], spouse:1, note:"Schoolteacher and keen gardener.", docs:[{title:"Birth certificate", file:"docs/birth-edith-1924.svg"}, {title:"Family photo, c.1950", file:"docs/photo-ashworths-1950.svg"}, {title:"Recipe book (PDF)", file:"docs/recipes-edith.pdf"}]},
+  {id:3, name:"Harold Ashworth", sex:"m", born:1948, died:2015, parents:[1,2], spouse:4, note:"Eldest son; ran the family hardware shop.", docs:[{title:"Birth certificate", file:"docs/birth-harold-1948.svg"}, {title:"Marriage certificate", file:"docs/marriage-harold-margaret-1973.svg"}, {title:"Obituary (PDF)", file:"docs/obituary-harold-2015.pdf"}]},
+  {id:4, name:"Margaret Ashworth (née Doyle)", sex:"f", born:1950, died:null, parents:[], spouse:3, note:"Retired nurse.", docs:[{title:"Marriage certificate", file:"docs/marriage-harold-margaret-1973.svg"}]},
+  {id:5, name:"Joan Pryce (née Ashworth)", sex:"f", born:1952, died:null, parents:[1,2], spouse:6, note:"Moved to Perth in 1975.", docs:[{title:"Letter home, 1975", file:"docs/letter-joan-1975.svg"}, {title:"Marriage certificate", file:"docs/marriage-joan-robert-1974.svg"}]},
+  {id:6, name:"Robert Pryce", sex:"m", born:1949, died:2020, parents:[], spouse:5, note:"Marine engineer.", docs:[{title:"Marriage certificate", file:"docs/marriage-joan-robert-1974.svg"}]},
+  {id:7, name:"Daniel Ashworth", sex:"m", born:1975, died:null, parents:[3,4], spouse:8, note:"Architect.", docs:[{title:"Birth certificate", file:"docs/birth-daniel-1975.svg"}]},
+  {id:8, name:"Priya Ashworth", sex:"f", born:1978, died:null, parents:[], spouse:7, note:"Software developer.", docs:[]},
+  {id:9, name:"Claire Ashworth", sex:"f", born:1979, died:null, parents:[3,4], spouse:null, note:"Musician.", docs:[{title:"Concert photo, 1999", file:"docs/photo-claire-1999.svg"}]},
+  {id:10,name:"Thomas Pryce", sex:"m", born:1977, died:null, parents:[5,6], spouse:11, note:"Chef.", docs:[{title:"Birth certificate", file:"docs/birth-thomas-1977.svg"}]},
+  {id:11,name:"Mei Pryce", sex:"f", born:1980, died:null, parents:[], spouse:10, note:"Photographer.", docs:[]},
+  {id:12,name:"Oliver Ashworth", sex:"m", born:2005, died:null, parents:[7,8], spouse:null, note:"University student.", docs:[{title:"Birth certificate", file:"docs/birth-oliver-2005.svg"}]},
+  {id:13,name:"Isla Ashworth", sex:"f", born:2009, died:null, parents:[7,8], spouse:null, note:"Loves football.", docs:[{title:"Christmas photo, 2018", file:"docs/photo-isla-leo-2018.svg"}]},
+  {id:14,name:"Leo Pryce", sex:"m", born:2010, died:null, parents:[10,11], spouse:null, note:"Budding artist.", docs:[{title:"Christmas photo, 2018", file:"docs/photo-isla-leo-2018.svg"}]}
+];
+// ==================================
+const by=Object.fromEntries(people.map(p=>[p.id,p]));
+const gen={};function g(p){if(gen[p.id]!=null)return gen[p.id];let v=p.parents.length?Math.max(...p.parents.map(i=>g(by[i])))+1:(p.spouse&&by[p.spouse].parents.length?null:0);if(v===null)v=g(by[p.spouse]);return gen[p.id]=v}
+people.forEach(g);
+const yrs=p=>p.born+"–"+(p.died??"");
+const card=p=>`<div class="p ${p.sex}" tabindex="0" data-id="${p.id}">${p.name}<small>${yrs(p)}</small></div>`;
+const names=["First generation","Second generation","Third generation","Fourth generation","Fifth generation"];
+const t=document.getElementById('t');const max=Math.max(...Object.values(gen));
+for(let i=0;i<=max;i++){const done=new Set();let h='';people.filter(p=>gen[p.id]===i).forEach(p=>{if(done.has(p.id))return;done.add(p.id);
+ if(p.spouse&&!done.has(p.spouse)){done.add(p.spouse);h+=`<div class="fam">${card(p)}<span class="amp">&hearts;</span>${card(by[p.spouse])}</div>`}else h+=`<div class="fam">${card(p)}</div>`});
+ t.insertAdjacentHTML('beforeend',`<section class="gen"><h2>${names[i]||'Generation '+(i+1)}</h2><div class="row">${h}</div></section>`)}
+const link=ids=>ids.length?ids.map(i=>`<a data-id="${i}">${by[i].name}</a>`).join(', '):'—';
+function show(id){const p=by[id];document.querySelectorAll('.p').forEach(e=>e.classList.toggle('sel',e.dataset.id==id));
+ const kids=people.filter(c=>c.parents.includes(id)).map(c=>c.id);
+ const sib=p.parents.length?people.filter(c=>c.id!==id&&c.parents.join()==p.parents.join()).map(c=>c.id):[];
+ const age=p.died?`died aged ~${p.died-p.born}`:`living, ~${new Date().getFullYear()-p.born}`;
+ document.getElementById('dc').innerHTML=`<h3>${p.name}</h3><div>${yrs(p)} (${age})</div><p>${p.note||''}</p><dl><dt>Parents</dt><dd>${link(p.parents)}</dd><dt>Spouse</dt><dd>${link(p.spouse?[p.spouse]:[])}</dd><dt>Siblings</dt><dd>${link(sib)}</dd><dt>Children</dt><dd>${link(kids)}</dd><dt>Documents</dt><dd>${docList(p)}</dd></dl>`;
+ document.getElementById('d').style.display='block'}
+function docList(p){const d=p.docs||[];if(!d.length)return '<span>None yet</span>';
+ return '<ul class="docs">'+d.map((x,i)=>/\.pdf$/i.test(x.file)?`<li><a href="${x.file}" target="_blank" rel="noopener"><span class="pdf">PDF</span>${x.title}</a></li>`:`<li><a href="${x.file}" data-doc="${p.id}:${i}"><img src="${x.file}" alt="">${x.title}</a></li>`).join('')+'</ul>'}
+function lbShow(x){document.getElementById('lbi').src=x.file;document.getElementById('lbi').alt=x.title;document.getElementById('lbc').textContent=x.title+' (example document)';document.getElementById('lb').style.display='flex'}
+function lbHide(){document.getElementById('lb').style.display='none'}
+function hide(){document.getElementById('d').style.display='none';document.querySelectorAll('.p.sel').forEach(e=>e.classList.remove('sel'))}
+document.addEventListener('click',e=>{const dl=e.target.closest('[data-doc]');if(dl){e.preventDefault();const[a,b]=dl.dataset.doc.split(':');lbShow(by[a].docs[b]);return}const el=e.target.closest('[data-id]');if(el)show(+el.dataset.id)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElementById('lb').style.display==='flex')lbHide();else hide()}if(e.key==='Enter'&&e.target.dataset.id)show(+e.target.dataset.id)});
+if(location.hash==='#demo')show(1);
+if(location.hash==='#demo-doc'){show(1);lbShow(by[1].docs[1])}
+</script></body></html>
