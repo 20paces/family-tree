@@ -1,82 +1,509 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Family Tree (Practice)</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Georgia,serif;background:#f6f1e7;color:#3b2f22}
-.banner{background:#b5462f;color:#fff;text-align:center;padding:10px;font:600 15px system-ui,sans-serif;letter-spacing:.5px}
-h1{text-align:center;margin:22px 10px 4px;font-size:clamp(24px,5vw,38px)}p.sub{text-align:center;margin:0 0 18px;color:#7a6650}
-.tree{display:flex;flex-direction:column;gap:34px;padding:10px 12px 30px;max-width:1200px;margin:auto}
-.gen{text-align:center}.gen h2{font:600 13px system-ui,sans-serif;text-transform:uppercase;letter-spacing:2px;color:#9a7f5f;margin:0 0 10px}
-.row{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
-.fam{display:flex;gap:6px;align-items:center;background:#ebe1cf;border-radius:14px;padding:6px}
-.fam .amp{color:#b5462f;font-size:20px}
-.p{border:2px solid #c9b79c;background:#fff;border-radius:10px;padding:10px 14px;min-width:120px;cursor:pointer;transition:.15s;font-size:15px}
-.p:hover,.p:focus{border-color:#b5462f;transform:translateY(-2px);box-shadow:0 4px 10px #0002;outline:none}
-.p.sel{border-color:#b5462f;background:#fdf0ea}.p small{display:block;color:#7a6650;font-family:system-ui,sans-serif}
-.p.m{border-top:5px solid #5d82a8}.p.f{border-top:5px solid #b8708f}
-#d{position:fixed;right:16px;bottom:16px;width:320px;max-width:calc(100% - 32px);background:#fff;border-radius:14px;box-shadow:0 8px 30px #0003;padding:18px;display:none;font-family:system-ui,sans-serif}
-#d h3{margin:0 0 6px;font-family:Georgia,serif;font-size:22px}#d .x{position:absolute;top:8px;right:12px;border:0;background:none;font-size:22px;cursor:pointer}
-#d a{color:#b5462f;cursor:pointer;text-decoration:underline}#d dl{margin:8px 0 0}#d dt{font-weight:600;margin-top:6px;font-size:13px;color:#7a6650}#d dd{margin:0}
-@media(max-width:600px){.fam{flex-direction:column}.fam .amp{display:none}.p{min-width:140px}#d{left:16px;right:16px;width:auto}}
-#d{max-height:calc(100vh - 32px);overflow:auto}
+*{box-sizing:border-box}
+body{margin:0;font-family:Georgia,serif;background:#f6f1e7;color:#3b2f22}
+body.mode-canvas{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.banner{background:#b5462f;color:#fff;text-align:center;padding:10px 12px;font:600 15px system-ui,sans-serif;letter-spacing:.4px}
+h1{text-align:center;margin:18px 12px 4px;font-size:clamp(24px,5vw,38px)}
+p.sub{text-align:center;margin:0 auto 12px;color:#7a6650;max-width:46rem;padding:0 16px;line-height:1.45}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;padding:0 12px 12px}
+.toolbar button,.jumps button{font:600 13px system-ui,sans-serif;border:1px solid #c9b79c;background:#fff;color:#3b2f22;border-radius:999px;padding:8px 12px;min-height:44px;cursor:pointer}
+.toolbar button:hover,.jumps button:hover,.toolbar button:focus-visible,.jumps button:focus-visible{border-color:#b5462f;outline:none}
+.jumps{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.hint{font:13px system-ui,sans-serif;color:#7a6650}
+.viewport{flex:1;min-height:0;position:relative;overflow:hidden;touch-action:none;cursor:grab;background:
+  radial-gradient(circle at 20% 10%, #fff 0, transparent 36%), #f3eadc;border-top:1px solid #e4d8c4}
+.viewport.grabbing{cursor:grabbing}
+.world{position:absolute;left:0;top:0;transform-origin:0 0}
+.wires{position:absolute;left:0;top:0;overflow:visible}
+.wires path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.wires path.parent{stroke-width:2;opacity:.9}
+.wires path.spouse{stroke:#b5462f;stroke-width:2}
+.wires.focusing path.parent{opacity:.22}
+.wires.focusing path.parent.hot{opacity:1;stroke-width:3.5}
+.heart{position:absolute;color:#b5462f;font-size:16px;line-height:1;transform:translate(-50%,-55%);pointer-events:none}
+.treelabel{position:absolute;transform:translate(-50%,-100%);font:700 12px system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;pointer-events:none}
+.p{position:absolute;width:158px;height:104px;border:2px solid #c9b79c;background:#fff;border-radius:10px;padding:7px 8px 6px 10px;cursor:pointer;font-size:14px;line-height:1.2;overflow:hidden}
+.p:hover,.p:focus-visible{border-color:#b5462f;outline:none;z-index:2}
+.p.m{border-top:5px solid #5d82a8}
+.p.f{border-top:5px solid #b8708f}
+.p.sel{border-color:#b5462f;background:#fdf0ea;z-index:2}
+.p.kin-p{box-shadow:0 0 0 3px #8a5a3c}
+.p.kin-m{box-shadow:0 0 0 3px #2c6e91}
+.p .top{display:flex;justify-content:space-between;align-items:center;gap:4px}
+.p .nm{display:block;font-weight:600;font-size:13.5px;line-height:1.15;max-height:2.3em;overflow:hidden}
+.p .yrs,.p .fam{color:#7a6650;font:12px system-ui,sans-serif}
+.p .yrs{display:block}
+.p .fam{font-weight:700;letter-spacing:.03em;text-transform:uppercase;font-size:10px}
+.badge{flex:none;font:700 9px system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#8a5a2a;background:#f3e2c2;border-radius:99px;padding:1px 5px}
+.pop{position:fixed;z-index:6;width:156px;pointer-events:none;background:#fff;border:2px solid #c9b79c;border-radius:12px;box-shadow:0 10px 28px #0003;padding:8px 8px 6px;text-align:center}
+.pop[hidden]{display:none}
+.pop img{width:140px;height:150px;object-fit:contain;background:#f6f1e7;border-radius:8px;display:block;margin:0 auto}
+.pop p{margin:6px 0 0;font:11px/1.3 system-ui,sans-serif;color:#7a6650}
+figure.portrait{margin:0;text-align:center;flex:none}
+figure.portrait img{width:84px;height:96px;object-fit:contain;background:#fff;border:1px solid #c9b79c;border-radius:10px}
+figure.portrait figcaption{font:11px/1.35 system-ui,sans-serif;color:#7a6650;margin-top:4px}
+.branch-stack{display:none}
+#d{position:fixed;right:16px;bottom:16px;width:360px;max-width:calc(100% - 32px);max-height:calc(100vh - 32px);overflow:auto;background:#fff;border-radius:14px;box-shadow:0 8px 30px #0003;padding:16px 16px 12px;display:none;flex-direction:column;font-family:system-ui,sans-serif;z-index:5}
+#dc{display:block;min-height:0}
+#d .pin{flex:none}
+#aside[hidden]{display:none}
+#aside{flex:none;max-height:24vh;overflow:auto;margin:0 12px 8px;padding:8px 10px 10px;background:#fff;border:1px solid #e4d8c4;border-radius:12px;font-family:system-ui,sans-serif}
+#aside h2{margin:0 0 4px;font-family:Georgia,serif;font-size:18px}
+#aside p{margin:0 0 6px;color:#7a6650;font-size:13px}
+.recorded{margin:0;font:13px/1.4 system-ui,sans-serif;color:#3b2f22}
+#d .sheet{display:flex;gap:10px;align-items:flex-start}
+#d .who{min-width:0}
+#d .rels{margin-top:4px}
+#d .docblock{margin:8px 0 0;padding:8px;background:#f6f1e7;border-radius:10px}
+#d .docblock h4{margin:0 0 6px;font:700 12px system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#7a6650}
+#d h3{margin:0 0 6px;font-family:Georgia,serif;font-size:22px;padding-right:28px}
+#d .x{position:absolute;top:8px;right:12px;border:0;background:none;font-size:22px;cursor:pointer;min-width:44px;min-height:44px}
+#d .life,#d .role,#d .note,#d .sampleflag{margin:0 0 6px}
+#d .role{font-weight:700;font-size:13px}
+#d .sampleflag{display:inline-block;background:#f3e2c2;color:#8a5a2a;border-radius:99px;padding:2px 8px;font:700 11px system-ui,sans-serif}
+#d .note{color:#3b2f22;line-height:1.4}
+#d dl{margin:8px 0 0}
+#d dt{font-weight:700;margin-top:8px;font-size:12px;color:#7a6650;text-transform:uppercase;letter-spacing:.04em}
+#d dd{margin:2px 0 0}
+#d .rel{display:inline-block;margin:2px 6px 2px 0;padding:4px 0;border:0;background:none;color:#b5462f;font:inherit;text-decoration:underline;cursor:pointer;text-align:left}
+#d .gp{display:block;margin-top:3px;color:#3b2f22}
+#d .tag{font:700 11px system-ui,sans-serif;color:#7a6650}
 .docs{list-style:none;padding:0;margin:4px 0 0;display:flex;flex-direction:column;gap:6px}
 .docs li a{display:flex;align-items:center;gap:8px;text-decoration:none;color:#3b2f22;background:#f6f1e7;border-radius:8px;padding:6px 8px}
-.docs li a:hover{background:#ebe1cf}.docs img{width:34px;height:44px;object-fit:cover;border:1px solid #c9b79c;background:#fff}
+.docs li a:hover{background:#ebe1cf}
+.docs img{width:34px;height:44px;object-fit:cover;border:1px solid #c9b79c;background:#fff}
 .docs .pdf{width:34px;height:44px;display:grid;place-items:center;background:#b5462f;color:#fff;font:700 10px system-ui;border-radius:3px}
 #lb{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;flex-direction:column;z-index:10;padding:16px}
 #lb img{max-width:100%;max-height:calc(100vh - 80px);box-shadow:0 10px 40px #000;background:#fff}
-#lb p{color:#fff;font:15px system-ui;margin:10px 0 0}#lb button{position:absolute;top:10px;right:16px;color:#fff;background:none;border:0;font-size:34px;cursor:pointer}
-</style></head><body>
+#lb p{color:#fff;font:15px system-ui;margin:10px 0 0}
+#lb button{position:absolute;top:10px;right:16px;color:#fff;background:none;border:0;font-size:34px;cursor:pointer;min-width:44px;min-height:44px}
+@media (max-width:760px){
+  body.mode-stack{overflow:auto}
+  .viewport{display:none}
+  .hint{display:none}
+  .zoom-tools{display:none}
+  .branch-stack{display:block;padding:4px 12px 28px}
+  .bsec{background:#fff;border-radius:16px;padding:14px 12px 12px;margin:0 0 14px;border-left:6px solid var(--c,#8a5a3c);box-shadow:0 2px 10px #0001}
+  .bsec h2{margin:0 0 4px;font-size:22px}
+  .bsec .blurb{margin:0 0 10px;color:#7a6650;font:15px system-ui,sans-serif;line-height:1.4}
+  .cards{display:flex;flex-direction:column;gap:8px}
+  .branch-stack .p{position:static;width:auto;height:auto;min-height:44px}
+  .relrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .relrow button{font:600 14px system-ui,sans-serif;border:1px solid #c9b79c;background:#f6f1e7;border-radius:10px;padding:8px 10px;min-height:44px;text-align:left;color:#3b2f22}
+  #d{left:8px;right:8px;bottom:8px;width:auto;max-height:70vh}
+}
+</style>
+</head>
+<body>
 <div class="banner">Practice site, example data</div>
-<h1>The Ashworth Family</h1><p class="sub">Fictional people. Tap anyone to see their details.</p>
-<div class="tree" id="t"></div>
-<div id="d" role="dialog"><button class="x" onclick="hide()" aria-label="Close">&times;</button><div id="dc"></div></div>
-<div id="lb" onclick="if(event.target===this)lbHide()"><button onclick="lbHide()" aria-label="Close">&times;</button><img id="lbi" alt=""><p id="lbc"></p></div>
+<h1>The Ashworth Family</h1>
+<p class="sub">Fictional people. Both parents are kept: the paternal Ashworth line, maternal Hale and Doyle, and the Pryce, Iyer, and Chen partner families. People marked Sample were added so those branches can be opened. Tap anyone for details.</p>
+<div class="toolbar">
+  <div class="zoom-tools">
+    <button type="button" id="zin" aria-label="Zoom in">Zoom in</button>
+    <button type="button" id="zout" aria-label="Zoom out">Zoom out</button>
+    <button type="button" id="zfit">Fit all</button>
+  </div>
+  <nav class="jumps" aria-label="Family branches" id="jumps"></nav>
+  <span class="hint">Drag to move · scroll to zoom</span>
+</div>
+<section id="aside" hidden></section>
+<div class="viewport" id="viewport">
+  <div class="world" id="world"></div>
+</div>
+<div class="branch-stack" id="stack"></div>
+<div id="d" role="dialog" aria-modal="false" aria-labelledby="dtitle" aria-hidden="true">
+  <button class="x" id="close" aria-label="Close">&times;</button>
+  <div id="dc"></div>
+</div>
+<div id="pop" class="pop" hidden><img id="popimg" alt=""><p id="popcap"></p></div>
+<div id="lb" onclick="if(event.target===this)lbHide()">
+  <button type="button" onclick="lbHide()" aria-label="Close">&times;</button>
+  <img id="lbi" alt="">
+  <p id="lbc"></p>
+</div>
+<script src="tree.js?v=6"></script>
 <script>
-// ===== EDIT FAMILY DATA HERE =====
-// id, name, sex (m/f), born, died (null = living), parents [ids], spouse id, note,
-// docs: [{title, file}] - files live in docs/ (images open in a lightbox, PDFs in a new tab)
-const people = [
-  {id:1, name:"Walter Ashworth", sex:"m", born:1921, died:1994, parents:[], spouse:2, note:"Carpenter from Ballarat.", docs:[{title:"Birth certificate", file:"docs/birth-walter-1921.svg"}, {title:"Marriage certificate", file:"docs/marriage-walter-edith-1946.svg"}, {title:"Will (PDF)", file:"docs/will-walter-1990.pdf"}]},
-  {id:2, name:"Edith Ashworth (née Hale)", sex:"f", born:1924, died:2009, parents:[], spouse:1, note:"Schoolteacher and keen gardener.", docs:[{title:"Birth certificate", file:"docs/birth-edith-1924.svg"}, {title:"Family photo, c.1950", file:"docs/photo-ashworths-1950.svg"}, {title:"Recipe book (PDF)", file:"docs/recipes-edith.pdf"}]},
-  {id:3, name:"Harold Ashworth", sex:"m", born:1948, died:2015, parents:[1,2], spouse:4, note:"Eldest son; ran the family hardware shop.", docs:[{title:"Birth certificate", file:"docs/birth-harold-1948.svg"}, {title:"Marriage certificate", file:"docs/marriage-harold-margaret-1973.svg"}, {title:"Obituary (PDF)", file:"docs/obituary-harold-2015.pdf"}]},
-  {id:4, name:"Margaret Ashworth (née Doyle)", sex:"f", born:1950, died:null, parents:[], spouse:3, note:"Retired nurse.", docs:[{title:"Marriage certificate", file:"docs/marriage-harold-margaret-1973.svg"}]},
-  {id:5, name:"Joan Pryce (née Ashworth)", sex:"f", born:1952, died:null, parents:[1,2], spouse:6, note:"Moved to Perth in 1975.", docs:[{title:"Letter home, 1975", file:"docs/letter-joan-1975.svg"}, {title:"Marriage certificate", file:"docs/marriage-joan-robert-1974.svg"}]},
-  {id:6, name:"Robert Pryce", sex:"m", born:1949, died:2020, parents:[], spouse:5, note:"Marine engineer.", docs:[{title:"Marriage certificate", file:"docs/marriage-joan-robert-1974.svg"}]},
-  {id:7, name:"Daniel Ashworth", sex:"m", born:1975, died:null, parents:[3,4], spouse:8, note:"Architect.", docs:[{title:"Birth certificate", file:"docs/birth-daniel-1975.svg"}]},
-  {id:8, name:"Priya Ashworth", sex:"f", born:1978, died:null, parents:[], spouse:7, note:"Software developer.", docs:[]},
-  {id:9, name:"Claire Ashworth", sex:"f", born:1979, died:null, parents:[3,4], spouse:null, note:"Musician.", docs:[{title:"Concert photo, 1999", file:"docs/photo-claire-1999.svg"}]},
-  {id:10,name:"Thomas Pryce", sex:"m", born:1977, died:null, parents:[5,6], spouse:11, note:"Chef.", docs:[{title:"Birth certificate", file:"docs/birth-thomas-1977.svg"}]},
-  {id:11,name:"Mei Pryce", sex:"f", born:1980, died:null, parents:[], spouse:10, note:"Photographer.", docs:[]},
-  {id:12,name:"Oliver Ashworth", sex:"m", born:2005, died:null, parents:[7,8], spouse:null, note:"University student.", docs:[{title:"Birth certificate", file:"docs/birth-oliver-2005.svg"}]},
-  {id:13,name:"Isla Ashworth", sex:"f", born:2009, died:null, parents:[7,8], spouse:null, note:"Loves football.", docs:[{title:"Christmas photo, 2018", file:"docs/photo-isla-leo-2018.svg"}]},
-  {id:14,name:"Leo Pryce", sex:"m", born:2010, died:null, parents:[10,11], spouse:null, note:"Budding artist.", docs:[{title:"Christmas photo, 2018", file:"docs/photo-isla-leo-2018.svg"}]}
-];
-// ==================================
-const by=Object.fromEntries(people.map(p=>[p.id,p]));
-const gen={};function g(p){if(gen[p.id]!=null)return gen[p.id];let v=p.parents.length?Math.max(...p.parents.map(i=>g(by[i])))+1:(p.spouse&&by[p.spouse].parents.length?null:0);if(v===null)v=g(by[p.spouse]);return gen[p.id]=v}
-people.forEach(g);
-const yrs=p=>p.born+"–"+(p.died??"");
-const card=p=>`<div class="p ${p.sex}" tabindex="0" data-id="${p.id}">${p.name}<small>${yrs(p)}</small></div>`;
-const names=["First generation","Second generation","Third generation","Fourth generation","Fifth generation"];
-const t=document.getElementById('t');const max=Math.max(...Object.values(gen));
-for(let i=0;i<=max;i++){const done=new Set();let h='';people.filter(p=>gen[p.id]===i).forEach(p=>{if(done.has(p.id))return;done.add(p.id);
- if(p.spouse&&!done.has(p.spouse)){done.add(p.spouse);h+=`<div class="fam">${card(p)}<span class="amp">&hearts;</span>${card(by[p.spouse])}</div>`}else h+=`<div class="fam">${card(p)}</div>`});
- t.insertAdjacentHTML('beforeend',`<section class="gen"><h2>${names[i]||'Generation '+(i+1)}</h2><div class="row">${h}</div></section>`)}
-const link=ids=>ids.length?ids.map(i=>`<a data-id="${i}">${by[i].name}</a>`).join(', '):'—';
-function show(id){const p=by[id];document.querySelectorAll('.p').forEach(e=>e.classList.toggle('sel',e.dataset.id==id));
- const kids=people.filter(c=>c.parents.includes(id)).map(c=>c.id);
- const sib=p.parents.length?people.filter(c=>c.id!==id&&c.parents.join()==p.parents.join()).map(c=>c.id):[];
- const age=p.died?`died aged ~${p.died-p.born}`:`living, ~${new Date().getFullYear()-p.born}`;
- document.getElementById('dc').innerHTML=`<h3>${p.name}</h3><div>${yrs(p)} (${age})</div><p>${p.note||''}</p><dl><dt>Parents</dt><dd>${link(p.parents)}</dd><dt>Spouse</dt><dd>${link(p.spouse?[p.spouse]:[])}</dd><dt>Siblings</dt><dd>${link(sib)}</dd><dt>Children</dt><dd>${link(kids)}</dd><dt>Documents</dt><dd>${docList(p)}</dd></dl>`;
- document.getElementById('d').style.display='block'}
-function docList(p){const d=p.docs||[];if(!d.length)return '<span>None yet</span>';
- return '<ul class="docs">'+d.map((x,i)=>/\.pdf$/i.test(x.file)?`<li><a href="${x.file}" target="_blank" rel="noopener"><span class="pdf">PDF</span>${x.title}</a></li>`:`<li><a href="${x.file}" data-doc="${p.id}:${i}"><img src="${x.file}" alt="">${x.title}</a></li>`).join('')+'</ul>'}
-function lbShow(x){document.getElementById('lbi').src=x.file;document.getElementById('lbi').alt=x.title;document.getElementById('lbc').textContent=x.title+' (example document)';document.getElementById('lb').style.display='flex'}
-function lbHide(){document.getElementById('lb').style.display='none'}
-function hide(){document.getElementById('d').style.display='none';document.querySelectorAll('.p.sel').forEach(e=>e.classList.remove('sel'))}
-document.addEventListener('click',e=>{const dl=e.target.closest('[data-doc]');if(dl){e.preventDefault();const[a,b]=dl.dataset.doc.split(':');lbShow(by[a].docs[b]);return}const el=e.target.closest('[data-id]');if(el)show(+el.dataset.id)});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElementById('lb').style.display==='flex')lbHide();else hide()}if(e.key==='Enter'&&e.target.dataset.id)show(+e.target.dataset.id)});
-if(location.hash==='#demo')show(1);
-if(location.hash==='#demo-doc'){show(1);lbShow(by[1].docs[1])}
-</script></body></html>
+(function () {
+  const FT = window.FamilyTree;
+  const NARROW = '(max-width: 760px)';
+  const viewport = document.getElementById('viewport');
+  const world = document.getElementById('world');
+  const stack = document.getElementById('stack');
+  const jumps = document.getElementById('jumps');
+  let laid = null;
+  let selected = null;
+  let scale = 1;
+  let tx = 0;
+  let ty = 0;
+  let narrow = false;
+
+  FT.SECTION_COPY.forEach(copy => {
+    const meta = FT.BRANCHES[copy.branch];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.dataset.branch = meta.key;
+    btn.textContent = meta.label;
+    btn.style.borderColor = meta.color;
+    jumps.appendChild(btn);
+  });
+
+  function apply() {
+    world.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+  }
+
+  function fit() {
+    if (!laid) return;
+    const rect = viewport.getBoundingClientRect();
+    scale = Math.min(1, FT.fitScale(laid.width, laid.height, rect.width, rect.height));
+    tx = Math.max(8, (rect.width - laid.width * scale) / 2);
+    ty = Math.max(8, (rect.height - laid.height * scale) / 2);
+    apply();
+  }
+
+  function panTo(id) {
+    const card = laid.cards.find(c => c.id === id);
+    if (!card) return;
+    const rect = viewport.getBoundingClientRect();
+    scale = Math.max(scale, 0.9);
+    tx = rect.width * 0.38 - (card.x + card.w / 2) * scale;
+    ty = rect.height * 0.42 - (card.y + card.h / 2) * scale;
+    apply();
+  }
+
+  function zoomAt(factor, cx, cy) {
+    const next = Math.min(2.2, Math.max(0.35, scale * factor));
+    tx = cx - (cx - tx) * (next / scale);
+    ty = cy - (cy - ty) * (next / scale);
+    scale = next;
+    apply();
+  }
+
+  function cardHtml(p, pos) {
+    const meta = FT.BRANCHES[p.branch];
+    const place = pos ? 'left:' + pos.x + 'px;top:' + pos.y + 'px;' : '';
+    return '<div class="p ' + p.sex + (p.sample ? ' sample' : '') + '" tabindex="0" data-id="' + p.id + '" style="' + place + '--c:' + meta.color + ';border-left:4px solid ' + meta.color + '">' +
+      '<span class="top"><span class="fam" style="color:' + meta.color + '">' + FT.esc(meta.name) + '</span>' +
+      (p.sample ? '<span class="badge">Sample</span>' : '') + '</span>' +
+      '<span class="nm">' + FT.esc(p.name) + '</span>' +
+      '<span class="yrs">' + FT.esc(FT.years(p)) + '</span>' +
+      '</div>';
+  }
+
+  function renderCanvas() {
+    document.body.classList.add('mode-canvas');
+    document.body.classList.remove('mode-stack');
+    laid = FT.layoutTree(window.__ftApproved ? { allowPartial: true } : undefined);
+    const hearts = laid.links.filter(l => l.type === 'spouse').map(l =>
+      '<span class="heart" style="left:' + l.x + 'px;top:' + l.y + 'px">&hearts;</span>').join('');
+    const labels = laid.labels.map(l =>
+      '<span class="treelabel" style="left:' + l.x + 'px;top:' + l.y + 'px;color:' + l.color + '">' + FT.esc(l.text) + '</span>').join('');
+    const paths = laid.links.map(l => {
+      if (l.type === 'spouse') return '<path class="spouse" d="' + l.d + '"></path>';
+      return '<path class="parent" data-parent="' + l.parent + '" data-child="' + l.child + '" data-side="' + l.side + '" d="' + l.d + '" stroke="' + l.color + '"></path>';
+    }).join('');
+    const cards = laid.cards.map(c => cardHtml(FT.by[c.id], c)).join('');
+    world.innerHTML = '<svg class="wires" id="wires" width="' + laid.width + '" height="' + laid.height + '">' + paths + '</svg>' + hearts + labels + cards;
+    world.style.width = laid.width + 'px';
+    world.style.height = laid.height + 'px';
+    requestAnimationFrame(fit);
+  }
+
+  function renderStack() {
+    document.body.classList.add('mode-stack');
+    document.body.classList.remove('mode-canvas');
+    const sections = FT.branchSections();
+    const aside = window.__ftAside || [];
+    const extra = aside.length ? '<section class="bsec" id="branch-recorded" style="--c:#8a5a3c">' +
+      '<h2>Also recorded</h2><p class="blurb">These people are in the approved record. They are not drawn as a biological couple line.</p>' +
+      '<div class="cards">' + aside.map(person => cardHtml(person)).join('') + '</div></section>' : '';
+    stack.innerHTML = sections.map(sec => {
+      const people = sec.members.map(id => cardHtml(FT.by[id] || FT.getPerson(id))).filter(Boolean).join('');
+      const related = sec.related.length ? '<div class="relrow">' + sec.related.map(r =>
+        '<button type="button" data-id="' + r.id + '">' + FT.esc(r.label) + '</button>').join('') + '</div>' : '';
+      return '<section class="bsec" id="branch-' + sec.branch + '" style="--c:' + sec.color + '">' +
+        '<h2>' + FT.esc(sec.label) + '</h2><p class="blurb">' + FT.esc(sec.blurb) + '</p>' +
+        '<div class="cards">' + people + '</div>' + related + '</section>';
+    }).join('') + extra;
+  }
+
+  function render() {
+    narrow = window.matchMedia(NARROW).matches;
+    if (narrow) renderStack();
+    else renderCanvas();
+    renderAside(collectAside());
+    if (selected) show(selected, true);
+  }
+
+  function show(id, keepView) {
+    const person = FT.getPerson(id);
+    if (!person) return;
+    selected = id;
+    const sides = FT.sideAncestors(id);
+    document.querySelectorAll('.p').forEach(el => {
+      const pid = +el.dataset.id;
+      el.classList.toggle('sel', pid === id);
+      el.classList.toggle('kin-p', sides.paternal.has(pid));
+      el.classList.toggle('kin-m', sides.maternal.has(pid));
+    });
+    const wires = document.getElementById('wires');
+    if (wires) {
+      wires.classList.add('focusing');
+      wires.querySelectorAll('path.parent').forEach(path => {
+        const parent = +path.dataset.parent;
+        const child = +path.dataset.child;
+        const hot = child === id || sides.paternal.has(parent) && sides.paternal.has(child) || sides.maternal.has(parent) && sides.maternal.has(child) || parent === id;
+        path.classList.toggle('hot', hot);
+      });
+    }
+    document.getElementById('dc').innerHTML = FT.detailHtml(id);
+    const h3 = document.querySelector('#dc h3');
+    if (h3) h3.id = 'dtitle';
+    const panel = document.getElementById('d');
+    panel.style.display = 'flex';
+    panel.setAttribute('aria-hidden', 'false');
+    if (!keepView) {
+      if (!narrow && laid) panTo(id);
+      const el = document.querySelector('#stack .p[data-id="' + id + '"]')
+        || document.querySelector('#aside [data-id="' + id + '"]')
+        || (person.branch ? document.querySelector('#branch-' + person.branch) : null);
+      if (narrow && el) el.scrollIntoView({ block: 'center' });
+    }
+  }
+
+  function hide() {
+    selected = null;
+    document.getElementById('d').style.display = 'none';
+    document.getElementById('d').setAttribute('aria-hidden', 'true');
+    document.querySelectorAll('.p.sel,.p.kin-p,.p.kin-m').forEach(el => el.classList.remove('sel', 'kin-p', 'kin-m'));
+    const wires = document.getElementById('wires');
+    if (wires) {
+      wires.classList.remove('focusing');
+      wires.querySelectorAll('path.hot').forEach(p => p.classList.remove('hot'));
+    }
+  }
+
+  function lbShow(x) {
+    document.getElementById('lbi').src = x.file;
+    document.getElementById('lbi').alt = x.title;
+    document.getElementById('lbc').textContent = x.title + ' (example document)';
+    document.getElementById('lb').style.display = 'flex';
+  }
+  function lbHide() {
+    document.getElementById('lb').style.display = 'none';
+  }
+  window.lbHide = lbHide;
+
+  function jump(branch) {
+    if (narrow) {
+      const sec = document.getElementById('branch-' + branch);
+      if (sec) sec.scrollIntoView({ block: 'start' });
+      return;
+    }
+    const card = laid && laid.cards.find(c => FT.by[c.id].branch === branch && FT.by[c.id].parents.length === 0);
+    if (card) panTo(card.id);
+  }
+
+  document.getElementById('zin').addEventListener('click', () => {
+    const r = viewport.getBoundingClientRect();
+    zoomAt(1.2, r.width / 2, r.height / 2);
+  });
+  document.getElementById('zout').addEventListener('click', () => {
+    const r = viewport.getBoundingClientRect();
+    zoomAt(1 / 1.2, r.width / 2, r.height / 2);
+  });
+  document.getElementById('zfit').addEventListener('click', fit);
+  document.getElementById('close').addEventListener('click', hide);
+
+  viewport.addEventListener('wheel', e => {
+    if (narrow) return;
+    e.preventDefault();
+    const r = viewport.getBoundingClientRect();
+    hidePop();
+    zoomAt(e.deltaY < 0 ? 1.1 : 0.9, e.clientX - r.left, e.clientY - r.top);
+  }, { passive: false });
+
+  let drag = null;
+  viewport.addEventListener('pointerdown', e => {
+    if (e.target.closest('.p, button, a')) return;
+    hidePop();
+    drag = { x: e.clientX, y: e.clientY, tx, ty };
+    viewport.classList.add('grabbing');
+    viewport.setPointerCapture(e.pointerId);
+  });
+  viewport.addEventListener('pointermove', e => {
+    if (!drag) return;
+    tx = drag.tx + (e.clientX - drag.x);
+    ty = drag.ty + (e.clientY - drag.y);
+    apply();
+  });
+  function endDrag() { drag = null; viewport.classList.remove('grabbing'); }
+
+  const pop = document.getElementById('pop');
+  function hidePop() { pop.hidden = true; }
+  function showPop(el) {
+    if (!el || drag) return;
+    const person = FT.by[+el.dataset.id];
+    if (!person) return;
+    const info = FT.portraitInfo(person);
+    const img = document.getElementById('popimg');
+    img.src = info.src;
+    img.alt = info.alt;
+    img.dataset.fallback = 'portraits/placeholder.svg';
+    document.getElementById('popcap').textContent = info.caption;
+    pop.hidden = false;
+    const rect = el.getBoundingClientRect();
+    const box = pop.getBoundingClientRect();
+    const pos = FT.placePopover(rect, box.width || 156, box.height || 190, window.innerWidth, window.innerHeight, 8);
+    pop.style.left = pos.left + 'px';
+    pop.style.top = pos.top + 'px';
+  }
+  document.addEventListener('pointerover', e => {
+    if (e.pointerType === 'touch') return;
+    const card = e.target.closest && e.target.closest('.p');
+    if (card) showPop(card);
+  });
+  document.addEventListener('pointerout', e => {
+    const card = e.target.closest && e.target.closest('.p');
+    if (!card || (e.relatedTarget && card.contains(e.relatedTarget))) return;
+    hidePop();
+  });
+  document.addEventListener('focusin', e => {
+    const card = e.target.closest && e.target.closest('.p');
+    if (card) showPop(card);
+  });
+  document.addEventListener('focusout', e => {
+    const next = e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.p');
+    if (!next) hidePop();
+  });
+  document.addEventListener('error', e => {
+    const img = e.target;
+    if (!img || !img.dataset || !img.dataset.fallback) return;
+    if (img.getAttribute('src') === img.dataset.fallback) return;
+    img.src = img.dataset.fallback;
+  }, true);
+  viewport.addEventListener('pointerup', endDrag);
+  viewport.addEventListener('pointercancel', endDrag);
+
+  function authHeaders() {
+    const headers = new Headers();
+    const devUser = sessionStorage.getItem('ft-dev-user');
+    if (devUser) headers.set('X-Dev-User', devUser);
+    return headers;
+  }
+  async function openDocument(doc) {
+    if (!doc) return;
+    if (String(doc.file).indexOf('/api/files/') === 0) {
+      const response = await fetch(doc.file, { headers: authHeaders() });
+      if (!response.ok) return;
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      if (FT.isPdf(doc.file, doc.contentType) || response.headers.get('content-type') === 'application/pdf') {
+        window.open(url, '_blank', 'noopener');
+      } else lbShow({ file: url, title: doc.title });
+      return;
+    }
+    if (FT.isPdf(doc.file, doc.contentType)) {
+      window.open(doc.file, '_blank', 'noopener');
+      return;
+    }
+    lbShow(doc);
+  }
+  document.addEventListener('click', e => {
+    const doc = e.target.closest('[data-doc]');
+    if (doc) {
+      e.preventDefault();
+      const parts = doc.dataset.doc.split(':');
+      const person = FT.by[+parts[0]] || (window.__ftDirectory && window.__ftDirectory[+parts[0]]);
+      openDocument(person && person.docs && person.docs[+parts[1]]);
+      return;
+    }
+    const person = e.target.closest('[data-id]');
+    if (person) {
+      e.preventDefault();
+      show(+person.dataset.id);
+      return;
+    }
+    const branch = e.target.closest('[data-branch]');
+    if (branch) jump(branch.dataset.branch);
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (document.getElementById('lb').style.display === 'flex') lbHide();
+      else hide();
+    }
+    if (e.key === 'Enter' && e.target.dataset && e.target.dataset.id) show(+e.target.dataset.id);
+    if (narrow || e.target.closest('#d')) return;
+    if (e.key === '+' || e.key === '=') document.getElementById('zin').click();
+    if (e.key === '-' || e.key === '_') document.getElementById('zout').click();
+    if (e.key === '0') fit();
+  });
+
+  let lastNarrow = window.matchMedia(NARROW).matches;
+  window.addEventListener('resize', () => {
+    const now = window.matchMedia(NARROW).matches;
+    if (now !== lastNarrow) {
+      lastNarrow = now;
+      render();
+    } else if (!now) {
+      fit();
+    }
+  });
+
+  function collectAside() {
+    const list = (window.__ftAside || []).slice();
+    if (!narrow && laid && laid.unplaced) {
+      laid.unplaced.forEach(id => {
+        if (list.some(person => person.id === id)) return;
+        const person = FT.getPerson(id);
+        if (person) list.push(Object.assign({ reason: 'Recorded, but not drawn on the couple chart.' }, person));
+      });
+    }
+    return list;
+  }
+  function renderAside(list) {
+    const aside = list || [];
+    const box = document.getElementById('aside');
+    if (!box) return;
+    if (!aside.length) {
+      box.hidden = true;
+      box.innerHTML = '';
+      return;
+    }
+    box.hidden = false;
+    box.innerHTML = '<h2>Also recorded</h2><p>These approved people stay off the couple chart. A step, adoptive, former-partner, or single-parent link is not drawn as a biological line. Open a name for the relationship.</p>' +
+      aside.map(person => '<button type="button" class="p ' + (person.sex || '') + '" data-id="' + person.id + '" style="position:static;display:inline-block;width:auto;height:auto;margin:6px">' + FT.esc(person.name) + '<small class="yrs">' + FT.esc(person.reason || '') + '</small></button>').join('');
+  }
+  async function start() {
+    const params = new URLSearchParams(location.search);
+    if (params.get('data') === 'approved') {
+      window.__ftApproved = true;
+      const devUser = params.get('as') || sessionStorage.getItem('ft-dev-user') || 'viewer@example.test';
+      sessionStorage.setItem('ft-dev-user', devUser);
+      const response = await fetch('/api/tree', { headers: { 'X-Dev-User': devUser } });
+      if (!response.ok) {
+        document.querySelector('h1').insertAdjacentHTML('afterend', '<p class="sub">Approved records could not be loaded.</p>');
+        return;
+      }
+      const mapped = FT.fromApproved(await response.json());
+      window.__ftDirectory = mapped.directory;
+      window.__ftAside = mapped.aside;
+      FT.replacePeople(mapped.canvas, mapped.directory);
+      const note = document.querySelector('p.sub');
+      if (note) note.textContent = 'Approved records only. Blood lines are biological parents and current partners. Other relationships are labeled and kept off those lines.';
+    }
+    render();
+    if (!window.__ftApproved && location.hash === '#demo') show(1);
+    if (!window.__ftApproved && location.hash === '#demo-doc') { show(1); lbShow(FT.by[1].docs[1]); }
+  }
+  start();
+})();
+</script>
+</body>
+</html>

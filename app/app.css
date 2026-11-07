@@ -1,0 +1,31 @@
+*{box-sizing:border-box}
+body{margin:0;background:#f6f1e7;color:#3b2f22;font-family:Georgia,serif}
+.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;padding:22px 20px 8px}
+.eyebrow{margin:0;font:600 12px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#b5462f}
+h1{margin:4px 0 0;font-size:clamp(28px,4vw,40px)}
+.devbar{font:14px system-ui,sans-serif;background:#fff;border:1px solid #c9b79c;border-radius:12px;padding:8px 10px}
+.devbar select{margin-left:8px;font:inherit;min-height:40px}
+.tabs{display:flex;gap:8px;padding:8px 20px 12px;flex-wrap:wrap}
+.tabs button{font:600 14px system-ui,sans-serif;border:1px solid #c9b79c;background:#fff;border-radius:999px;padding:8px 14px;min-height:44px;cursor:pointer}
+.tabs button.on{background:#3b2f22;color:#fff;border-color:#3b2f22}
+.status{margin:0 20px 8px;min-height:1.2em;font:14px system-ui,sans-serif;color:#8a5a2a}
+main{padding:0 20px 32px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.card,.panel{background:#fff;border:1px solid #e4d8c4;border-radius:16px;padding:14px 16px;box-shadow:0 8px 24px #0000000d}
+.card h2,.panel h2{margin:0 0 8px;font-size:22px}
+.meta{font:13px system-ui,sans-serif;color:#7a6650}
+.kind{display:inline-block;margin:2px 4px 0 0;padding:2px 8px;border-radius:999px;background:#f6f1e7;font:12px system-ui,sans-serif}
+form{display:grid;gap:8px}
+label{font:13px system-ui,sans-serif;display:grid;gap:4px}
+input,select,textarea{font:16px system-ui,sans-serif;padding:8px 10px;border:1px solid #c9b79c;border-radius:10px;background:#fff}
+textarea{min-height:72px}
+button.primary{font:600 15px system-ui,sans-serif;background:#b5462f;color:#fff;border:0;border-radius:999px;min-height:44px;padding:8px 16px;cursor:pointer}
+button.quiet{font:600 14px system-ui,sans-serif;background:#fff;border:1px solid #c9b79c;border-radius:999px;min-height:40px;padding:6px 12px;cursor:pointer}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.list{display:grid;gap:8px;margin-top:12px}
+.item{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-top:1px solid #f0e6d8}
+.layout{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+@media (max-width:760px){
+  .layout{grid-template-columns:1fr}
+  .top{flex-direction:column;align-items:stretch}
+}

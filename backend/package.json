@@ -1,0 +1,9 @@
+{
+  "name": "family-tree-private",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "dev": "node dev-server.js"
+  }
+}
