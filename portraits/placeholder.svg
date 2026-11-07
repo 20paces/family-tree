@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="180" viewBox="0 0 160 180" role="img">
+<title>Example portrait placeholder</title>
+<rect width="160" height="180" rx="12" fill="#f3eadc"/>
+<ellipse cx="80" cy="98" rx="34" ry="40" fill="#f6d7be" stroke="#3b2f22" stroke-width="3"/>
+<circle cx="68" cy="96" r="4" fill="#fff" stroke="#3b2f22" stroke-width="1.5"/>
+<circle cx="92" cy="96" r="4" fill="#fff" stroke="#3b2f22" stroke-width="1.5"/>
+<path d="M70 116 Q80 122 90 116" fill="none" stroke="#8a3d4a" stroke-width="2.5" stroke-linecap="round"/>
+<text x="80" y="168" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#8a5a2a">EXAMPLE</text>
+</svg>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Family tree preview</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <div>
+    <p class="eyebrow">Local preview · example data</p>
+    <h1>Private family record</h1>
+  </div>
+  <div id="devbar" class="devbar" hidden>
+    <label>Preview identity
+      <select id="who">
+        <option value="admin@example.test">Administrator</option>
+        <option value="contributor@example.test">Contributor</option>
+        <option value="viewer@example.test">Viewer</option>
+        <option value="revoked@example.test">Revoked member</option>
+      </select>
+    </label>
+  </div>
+</header>
+<nav class="tabs" aria-label="Sections">
+  <button type="button" data-view="tree" class="on">Tree</button>
+  <button type="button" data-view="inbox">Inbox</button>
+  <button type="button" data-view="editor">Editor</button>
+  <button type="button" data-view="admin">Review</button>
+</nav>
+<p id="status" class="status" role="status"></p>
+<main id="main"></main>
+<script src="app.js"></script>
+</body>
+</html>
